@@ -14,12 +14,7 @@ clk_div divider (
 
 always #1 clk = ~clk;
 
-initial begin
-	{divider.clk_div2, divider.clk_div4, 
-	 divider.clk_div8} = 3'b0;
-
-	#1 reset <= 1'b0;
-end
+initial #1 reset <= 1'b0;
 endmodule
 
 
@@ -34,7 +29,7 @@ reg [2:0] r_cnr;
 
 always @(posedge clk)
 if (reset)
-	{r_cnr, clk_div2, clk_div4, clk_div8} <= 5'h0;
+	{r_cnr, clk_div2, clk_div4, clk_div8} <= 6'h0;
 else begin
 	r_cnr <= r_cnr + 1;
 

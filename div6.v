@@ -12,10 +12,7 @@ clk_div6 divider (
 
 always #1 clk = ~clk;
 
-initial begin
-	divider.clk_div6 <= 1'b0;
-	#1 reset <= 1'b0;
-end
+initial #1 reset <= 1'b0;
 endmodule
 
 
@@ -25,19 +22,16 @@ module clk_div6 (
 	output  reg	clk_div6
 );
 reg [1:0] r_cnt;
-reg [1:0] r_nxt;
 
 always @(posedge clk) begin
 
 if (reset)
-	{r_cnt, r_nxt, clk_div6} <= 5'b00;
+	{r_cnt, clk_div6} <= 3'b00;
 
-else	if (r_nxt == 2'b11) begin
+else	if (r_cnt == 2'b10) begin
 		r_cnt <= 2'b00;
 		clk_div6 <= ~clk_div6;
      	end else
-		r_cnt <= r_nxt;
-
-assign r_nxt = r_cnt + 2'b01;
+		r_cnt <= r_cnt + 1;
 end
 endmodule

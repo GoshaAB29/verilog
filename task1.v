@@ -16,9 +16,9 @@ end
 
 always @(data) begin
 	if (ans)
-		$display ("%d is odd", data);
-	else
 		$display ("%d is even", data);
+	else
+		$display ("%d is odd", data);
 end
 
 endmodule
@@ -27,5 +27,5 @@ module div2 (
 input  wire [7:0] data,
 output wire 	   ans
 );
-assign ans = data & 8'b01;
+assign ans = ~data[0];
 endmodule
