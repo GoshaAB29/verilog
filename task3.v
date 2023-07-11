@@ -19,12 +19,12 @@ module log2 (
 	input  wire [7:0] num,
 	output wire [2:0] log
 ); 
-assign log = {3{num == 8'd128}} & 3'd7 |
-	     {3{num == 8'd64 }} & 3'd6 |
-	     {3{num == 8'd32 }} & 3'd5 |
-	     {3{num == 8'd16 }} & 3'd4 |
-	     {3{num == 8'd8  }} & 3'd3 |
-	     {3{num == 8'd4  }} & 3'd2 |
-	     {3{num == 8'd2  }} & 3'd1 |
-	     {3{num == 8'd1  }} & 3'd0;
+	assign log = {3{num[7]}} & 3'd7 |
+		     {3{num[6]}} & 3'd6 |
+		     {3{num[5]}} & 3'd5 |
+		     {3{num[4]}} & 3'd4 |
+		     {3{num[3]}} & 3'd3 |
+		     {3{num[2]}} & 3'd2 |
+		     {3{num[1]}} & 3'd1 |
+		     {3{num[0]}} & 3'd0;
 endmodule
