@@ -1,30 +1,51 @@
 module top();
-reg [7:0] number;
-log2 test (
-	.num ( number[7:0] ),
-	.log (	           )
+localparam IN_WIDTH = 16;
+
+reg [IN_WIDTH -1:0] number;
+log2
+#(	.IN_WIDTH  ( IN_WIDTH )
+)	test
+(
+	.num ( number ),
+	.log (	      )
 );
 
+
+localparam MAX_NUMBER = $pow(2, IN_WIDTH -1);
 initial begin
-	for (number = 8'd128; number > 8'd1; number = number >> 1'd1)
+	for (number = MAX_NUMBER; number > 1; number = number >> 1)
 		#1 $display ("log(%d) = %d", number, test.log);
 
-	number = 3'd1;
+	number = 1;
 	#1 $display ("log(%d) = %d", number, test.log);
 end
 endmodule
 
 
-module log2 (
-	input  wire [7:0] num,
-	output wire [2:0] log
+module log2 
+#(
+	parameter IN_WIDTH  = 8,
+	parameter OUT_WIDTH = $clog2(IN_WIDTH)                                                                     
+)
+(
+	input  wire [IN_WIDTH  -1:0] num,
+	output wire [OUT_WIDTH -1:0] log
 ); 
-	assign log = {3{num[7]}} & 3'd7 |
-		     {3{num[6]}} & 3'd6 |
-		     {3{num[5]}} & 3'd5 |
-		     {3{num[4]}} & 3'd4 |
-		     {3{num[3]}} & 3'd3 |
-		     {3{num[2]}} & 3'd2 |
-		     {3{num[1]}} & 3'd1 |
-		     {3{num[0]}} & 3'd0;
+
+wire [OUT_WIDTH -1:0] tmp_array [IN_WIDTH -1:0];
+
+
+
+
+genvar ii;
+generate for (ii = 0; ii < IN_WIDTH; ii = ii + 1)
+begin: loop_0
+	if (ii == 0)
+		assign tmp_array[ii] = {IN_WIDTH{num[ii]}} & ii;
+	else
+		assign tmp_array[ii] = {IN_WIDTH{num[ii]}} & ii | tmp_array[ii -1];
+end
+endgenerate
+
+assign log = tmp_array[IN_WIDTH -1];
 endmodule
