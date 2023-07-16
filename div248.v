@@ -25,16 +25,13 @@ module clk_div (
 	output  reg	clk_div4,
 	output  reg	clk_div8
 );
-reg [2:0] r_cnr;
 
 always @(posedge clk)
 if (reset)
-	{r_cnr, clk_div2, clk_div4, clk_div8} <= 6'h0;
+	{clk_div2, clk_div4, clk_div8} <= 3'h0;
 else begin
-	r_cnr <= r_cnr + 1;
-
 	clk_div2 <= ~clk_div2;
-	clk_div4 <= r_cnr[1];
-	clk_div8 <= r_cnr[2];
+	clk_div4 <= clk_div2 ? ~clk_div4 : clk_div4;
+	clk_div8 <= clk_div2 & clk_div4 ? ~clk_div8 : clk_div8; 
 end
 endmodule
