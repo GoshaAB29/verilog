@@ -82,42 +82,60 @@ reg [DATA_WIDTH -1:0] 	mem [FIFO_DEPTH -1:0];
 reg [ADDRSIZE -1:0]	wr_addr;
 reg [ADDRSIZE -1:0]	rd_addr;
 
-always @(posedge clk)
-
-if (reset) begin: reset_0
-	integer ii;
-	for (ii = 0; ii < FIFO_DEPTH; ii = ii + 1)
-	begin: loop0
-		mem[ii] <= 0;
+always @(posedge clk)				//address always-block
+begin
+	if (reset)
+		{rd_addr, wr_addr} <=0;
+	else begin
+		if (rd_en & rd_val)		
+			rd_addr <= (rd_addr + 1 == FIFO_DEPTH)? 0 : rd_addr + 1;
+		if (wr_en & wr_ready)
+			wr_addr	<= (wr_addr + 1 == FIFO_DEPTH)? 0 : wr_addr + 1;
 	end
-	{rd_data, rd_val, wr_addr, rd_addr} <= 0;
-	wr_ready <= 1;
+end
 
-end else begin
-	if (rd_en & rd_val) begin
-		rd_addr        <= (rd_addr + 1 == FIFO_DEPTH)? 0 : rd_addr + 1;
-		rd_data        <= mem[rd_addr];
-		mem[rd_addr]   <= 0;
+always @(posedge clk)				//flag always-block
+begin
+	if (reset) begin
+		rd_val   <= 1'b0;
+		wr_ready <= 1'b1;
+	end else begin
 
-		wr_ready       <= 1;
+		if (rd_en & rd_val)
+			wr_ready <= 1;
+		else if (wr_en & wr_ready) begin
+			if (wr_addr + 1 == FIFO_DEPTH)
+				wr_ready <= (0           == rd_addr)? 1'b0 : 1'b1;
+			else
+				wr_ready <= (wr_addr + 1 == rd_addr)? 1'b0 : 1'b1;
+		end
 
-		if (rd_addr + 1 == FIFO_DEPTH)
-			rd_val <= (0           == wr_addr)? 1'b0 : 1'b1;
-		else
-			rd_val <= (rd_addr + 1 == wr_addr)? 1'b0 : 1'b1;
+
+		if (rd_en & rd_val) begin
+			if (rd_addr + 1 == FIFO_DEPTH)
+				rd_val <= (0           == wr_addr)? 1'b0 : 1'b1;
+			else
+				rd_val <= (rd_addr + 1 == wr_addr)? 1'b0 : 1'b1;
+		end else if (wr_en & wr_ready)
+			rd_val <= 1;
+
 	end
+end
 
-	if (wr_en & wr_ready) begin
-		mem[wr_addr]     <= wr_data;
-		wr_addr	         <= (wr_addr + 1 == FIFO_DEPTH)? 0 : wr_addr + 1;
+always @(posedge clk)				//data always-block
+begin 
+	if (reset)
+		rd_data <= 0;
+	else begin
+		if (rd_en & rd_val) begin
+			rd_data        <= mem[rd_addr];
+			mem[rd_addr]   <= 0;
+		end
 
-		if (wr_addr + 1 == FIFO_DEPTH)
-			wr_ready <= (0           == rd_addr)? 1'b0 : 1'b1;
-		else
-			wr_ready <= (wr_addr + 1 == rd_addr)? 1'b0 : 1'b1;
-
-		rd_val           <= 1'b1;
-	end
+		if (wr_en & wr_ready) begin
+			mem[wr_addr]     <= wr_data;
+		end
 		
+	end
 end
 endmodule
