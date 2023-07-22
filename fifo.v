@@ -35,27 +35,29 @@ wr_en <= 1;
 wr_data <= 7;
 
 #2 wr_data <= 6;
+$display ("wr_ready = %d (1 is true), rd_val = %d (0 is true)",
+	  FIFO.wr_ready, FIFO.rd_val);
 
 #2 wr_data <= 5;
-$display ("wr_ready = %d (1 is true), rd_ready = %d (1 is true)",
+$display ("wr_ready = %d (1), rd_val = %d (0)",
 	  FIFO.wr_ready, FIFO.rd_val);
 #2 wr_data <= 4;
-$display ("wr_ready = %d (0 is true), rd_ready = %d (1 is true)", 
+$display ("wr_ready = %d (0), rd_val = %d (0)", 
 	  FIFO.wr_ready, FIFO.rd_val);
 
 wr_en <= 0;
 
 #2 rd_en <= 1;
-$display ("rd_data = %d (0 is true)", FIFO.rd_data);
+$display ("rd_data = %d (0)", FIFO.rd_data);
 
-#2 $display ("wr_ready = %d (1 is true), rd_val = %d (1 is true)",
-	     FIFO.wr_ready, FIFO.rd_val);
-   $display ("rd_data = %d (7 is true)", FIFO.rd_data);
+#2 $display ("rd_data = %d (7), wr_ready = %d (1), rd_val = %d (1)",
+	     FIFO.rd_data, FIFO.wr_ready, FIFO.rd_val);
 
-#2 $display ("rd_data = %d (6 is true)", FIFO.rd_data);
-#2 $display ("rd_data = %d (5 is true)", FIFO.rd_data);
-#2 $display ("wr_ready = %d (1 is true), rd_val = %d (0 is true)",
-	     FIFO.wr_ready, FIFO.rd_val);
+#2 $display ("rd_data = %d (6)", FIFO.rd_data);
+#2 $display ("rd_data = %d (5), wr_ready = %d (1), rd_val = %d (1)",
+	     FIFO.rd_data, FIFO.wr_ready, FIFO.rd_val);
+#2 $display ("rd_data = %d (5), wr_ready = %d (1), rd_val = %d (0)",
+	     FIFO.rd_data, FIFO.wr_ready, FIFO.rd_val);
 
 end
 endmodule
@@ -81,43 +83,47 @@ localparam ADDRSIZE = $clog2(FIFO_DEPTH);
 reg [DATA_WIDTH -1:0] 	mem [FIFO_DEPTH -1:0];
 reg [ADDRSIZE -1:0]	wr_addr;
 reg [ADDRSIZE -1:0]	rd_addr;
+reg			rd_ready;
 
 always @(posedge clk)				//address always-block
 begin
 	if (reset)
-		{rd_addr, wr_addr} <=0;
+		{rd_addr, wr_addr} <= 0;
 	else begin
-		if (rd_en & rd_val)		
-			rd_addr <= (rd_addr + 1 == FIFO_DEPTH)? 0 : rd_addr + 1;
+		if (rd_en & rd_ready)		
+			rd_addr <= (rd_addr == FIFO_DEPTH - 1)? 0 : rd_addr + 1;
 		if (wr_en & wr_ready)
-			wr_addr	<= (wr_addr + 1 == FIFO_DEPTH)? 0 : wr_addr + 1;
+			wr_addr	<= (wr_addr == FIFO_DEPTH - 1)? 0 : wr_addr + 1;
 	end
 end
 
 always @(posedge clk)				//flag always-block
 begin
 	if (reset) begin
-		rd_val   <= 1'b0;
+		{rd_val, rd_ready}  <= 2'b0;
 		wr_ready <= 1'b1;
 	end else begin
 
-		if (rd_en & rd_val)
+		if (rd_en & rd_ready)
 			wr_ready <= 1;
 		else if (wr_en & wr_ready) begin
 			if (wr_addr + 1 == FIFO_DEPTH)
-				wr_ready <= (0           == rd_addr)? 1'b0 : 1'b1;
+				wr_ready <= (0           != rd_addr);
 			else
-				wr_ready <= (wr_addr + 1 == rd_addr)? 1'b0 : 1'b1;
+				wr_ready <= (wr_addr + 1 != rd_addr);
 		end
 
 
-		if (rd_en & rd_val) begin
+		if (rd_en & rd_ready) begin
 			if (rd_addr + 1 == FIFO_DEPTH)
-				rd_val <= (0           == wr_addr)? 1'b0 : 1'b1;
+				rd_ready <= (0           != wr_addr);
 			else
-				rd_val <= (rd_addr + 1 == wr_addr)? 1'b0 : 1'b1;
+				rd_ready <= (rd_addr + 1 != wr_addr);
 		end else if (wr_en & wr_ready)
-			rd_val <= 1;
+			rd_ready <= 1;
+
+
+		rd_val <= (rd_en)? rd_ready : rd_val;
 
 	end
 end
@@ -127,7 +133,7 @@ begin
 	if (reset)
 		rd_data <= 0;
 	else begin
-		if (rd_en & rd_val) begin
+		if (rd_en & rd_ready) begin
 			rd_data        <= mem[rd_addr];
 			mem[rd_addr]   <= 0;
 		end
