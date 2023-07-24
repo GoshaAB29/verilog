@@ -133,14 +133,12 @@ begin
 	if (reset)
 		rd_data <= 0;
 	else begin
-		if (rd_en & rd_ready) begin
-			rd_data        <= mem[rd_addr];
-			mem[rd_addr]   <= 0;
-		end
+		if (rd_en & rd_ready)
+			rd_data	     <= mem[rd_addr];
 
-		if (wr_en & wr_ready) begin
-			mem[wr_addr]     <= wr_data;
-		end
+		if (wr_en & wr_ready) 
+			mem[wr_addr] <= wr_data;
+		
 		
 	end
 end
